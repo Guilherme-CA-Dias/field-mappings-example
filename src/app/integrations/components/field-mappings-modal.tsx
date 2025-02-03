@@ -59,8 +59,6 @@ export function FieldMappingsModal({
     if (!fieldMappingInstance) return
 
     try {
-      setIsSaving(true)
-      
       const currentMapping = await integrationApp
         .connection(integrationKey)
         .fieldMapping('contacts')
@@ -79,17 +77,15 @@ export function FieldMappingsModal({
 
     } catch (error) {
       console.error("Failed to update field mapping:", error)
-    } finally {
-      setIsSaving(false)
     }
   }, [fieldMappingInstance, integrationApp, integrationKey])
 
   const tableProps = useMemo(() => ({
     fieldMappingInstance: fieldMappingInstance || null,
     onFieldUpdate: handleFieldUpdate,
-    isLoading: loading || isSaving,
+    isLoading: loading,
     selectedFields,
-  }), [fieldMappingInstance, handleFieldUpdate, loading, isSaving, selectedFields])
+  }), [fieldMappingInstance, handleFieldUpdate, loading, selectedFields])
 
   const selectorProps = useMemo(() => ({
     schema: fieldMappingInstance?.externalSchema,
@@ -101,12 +97,12 @@ export function FieldMappingsModal({
     <Modal 
       open={open} 
       onClose={() => onOpenChange(false)}
-      className="w-full max-w-4xl p-6"
+      className="max-w-[90vw] xl:max-w-7xl h-[85vh] flex flex-col"
     >
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start p-8 border-b">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Field Mappings</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mt-1">
             Configure how fields are mapped between systems
           </p>
         </div>
@@ -114,18 +110,21 @@ export function FieldMappingsModal({
           onClick={() => onOpenChange(false)}
           className="rounded-full p-2 hover:bg-accent"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
       </div>
-      <div className="space-y-6">
-        {fieldMappingInstance && !loading && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Select Fields to Map</h3>
-            <FieldSelector {...selectorProps} />
+
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="space-y-8">
+          {fieldMappingInstance && !loading && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Select Fields to Map</h3>
+              <FieldSelector {...selectorProps} />
+            </div>
+          )}
+          <div className="mt-6">
+            <FieldMappingTable {...tableProps} />
           </div>
-        )}
-        <div className="mt-6">
-          <FieldMappingTable {...tableProps} />
         </div>
       </div>
     </Modal>

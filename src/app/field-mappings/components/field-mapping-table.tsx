@@ -1,3 +1,5 @@
+"use client"
+
 import { DataForm, DataSchema } from "@integration-app/sdk"
 import {
   Table,
@@ -9,6 +11,10 @@ import {
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useState, useEffect, memo, useMemo, useCallback } from "react"
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+import { DraggableField } from "./draggable-field"
+import { DroppableTarget } from "./droppable-target"
 
 interface FieldMappingInstance {
   appSchema: DataSchema
@@ -30,7 +36,7 @@ interface FieldMappingTableProps {
   selectedFields: string[]
 }
 
-// Update the format function to handle more cases and be more concise
+// Move this outside the component to prevent recreation
 const formatMappingExpression = (value: any): string => {
   if (!value) return 'Select an App field'
   
@@ -52,59 +58,87 @@ const formatMappingExpression = (value: any): string => {
   return JSON.stringify(value)
 }
 
-const FieldRow = memo(function FieldRow({
+// Create a separate memoized component for the table header
+const TableHeaderComponent = memo(function TableHeaderComponent() {
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>HubSpot Field</TableHead>
+        <TableHead>Mapping</TableHead>
+      </TableRow>
+    </TableHeader>
+  )
+})
+
+// Create a more granular row component that manages its own state
+const MappingRow = memo(function MappingRow({
   field,
   exportForm,
-  currentMapping,
-  onSelectChange,
-  selectedValue,
+  initialMapping,
+  onUpdate,
 }: {
   field: any
   exportForm: DataForm
-  currentMapping: any
-  onSelectChange: (field: any, value: string) => void
-  selectedValue: any
+  initialMapping: any
+  onUpdate: (value: any) => void
 }) {
-  const options = useMemo(() => 
-    exportForm.getFieldValueOptions(field),
-    [exportForm, field]
-  )
+  const [currentValue, setCurrentValue] = useState(initialMapping)
+  const [isUpdating, setIsUpdating] = useState(false)
+  
+  const handleDrop = useCallback(async (item: any) => {
+    const options = exportForm.getFieldValueOptions(field)
+    const option = options.find(opt => 
+      opt.name === item.name && JSON.stringify(opt.value) === JSON.stringify(item.value)
+    )
+    if (option) {
+      setIsUpdating(true)
+      setCurrentValue(option.value)
+      await onUpdate(option.value)
+      setIsUpdating(false)
+    }
+  }, [exportForm, field, onUpdate])
 
-  const currentOption = useMemo(() => 
-    options.find(opt => JSON.stringify(opt.value) === JSON.stringify(selectedValue)),
-    [options, selectedValue]
-  )
+  const displayValue = useMemo(() => {
+    const options = exportForm.getFieldValueOptions(field)
+    const currentOption = options.find(opt => 
+      JSON.stringify(opt.value) === JSON.stringify(currentValue)
+    )
+    return currentOption?.name || formatMappingExpression(currentValue)
+  }, [exportForm, field, currentValue])
 
   return (
     <TableRow>
       <TableCell className="font-medium">{field.name}</TableCell>
       <TableCell>
-        <select
-          className="w-[280px] rounded-md border border-input 
-            dark:bg-background dark:text-foreground 
-            bg-white text-black
-            px-3 py-2 text-sm ring-offset-background 
-            focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 
-            disabled:cursor-not-allowed disabled:opacity-50 
-            [&>option]:dark:bg-background [&>option]:dark:text-foreground
-            [&>option]:bg-white [&>option]:text-black"
-          onChange={(e) => onSelectChange(field, e.target.value)}
-          value={currentOption?.name || ''}
-        >
-          <option value="">
-            {currentMapping ? formatMappingExpression(currentMapping) : 'Select an App field'}
-          </option>
-          {options.map((option, idx) => (
-            <option 
-              key={`${field.locator}-${idx}`}
-              value={option.name}
-            >
-              {option.name}
-            </option>
-          ))}
-        </select>
+        <DroppableTarget
+          onDrop={handleDrop}
+          currentValue={displayValue}
+          isUpdating={isUpdating}
+        />
       </TableCell>
     </TableRow>
+  )
+})
+
+// Create a separate memoized component for the available fields sidebar
+const AvailableFieldsSidebar = memo(function AvailableFieldsSidebar({
+  fields
+}: {
+  fields: { name: string; value: any }[]
+}) {
+  return (
+    <div className="space-y-2">
+      <h4 className="font-medium text-sm">Available Fields</h4>
+      <div className="space-y-2 p-4 rounded-md border border-gray-200 dark:border-gray-700">
+        {fields.map((field, index) => (
+          <DraggableField
+            key={index}
+            name={field.name}
+            value={field.value}
+          />
+        ))}
+      </div>
+    </div>
   )
 })
 
@@ -114,8 +148,6 @@ export const FieldMappingTable = memo(function FieldMappingTable({
   isLoading = false,
   selectedFields,
 }: FieldMappingTableProps) {
-  const [selectedValues, setSelectedValues] = useState<Record<string, any>>({})
-
   const exportForm = useMemo(() => {
     if (!fieldMappingInstance) return null
     return new DataForm({
@@ -133,80 +165,72 @@ export const FieldMappingTable = memo(function FieldMappingTable({
     return fields.filter(field => selectedFields.includes(field.locator))
   }, [fields, selectedFields])
 
-  useEffect(() => {
-    if (exportForm) {
-      const initialValues: Record<string, any> = {}
-      fields.forEach(field => {
-        const options = exportForm.getFieldValueOptions(field)
-        const selectedOption = options.find(opt => opt.selected)
-        if (selectedOption) {
-          initialValues[field.locator] = selectedOption.value
-        }
-      })
-      setSelectedValues(initialValues)
-    }
-  }, [exportForm, fields])
+  const handleFieldUpdate = useCallback((field: any, value: any) => {
+    // Debounce the API call to prevent rapid updates
+    const timeoutId = setTimeout(() => {
+      onFieldUpdate(value, field)
+    }, 100)
 
-  const handleSelectChange = useCallback((field: any, optionValue: string) => {
-    if (!exportForm) return
-    const options = exportForm.getFieldValueOptions(field)
-    const selectedOption = options.find(opt => opt.name === optionValue)
+    return () => clearTimeout(timeoutId)
+  }, [onFieldUpdate])
+
+  const availableFields = useMemo(() => {
+    if (!exportForm) return []
+    const firstField = exportForm.getFields()[0]
+    if (!firstField) return []
     
-    if (selectedOption) {
-      setSelectedValues(prev => ({
-        ...prev,
-        [field.locator]: selectedOption.value
-      }))
-      onFieldUpdate(selectedOption.value, field)
-    }
-  }, [exportForm, onFieldUpdate])
+    const options = exportForm.getFieldValueOptions(firstField)
+    return options.map(option => ({
+      name: option.name,
+      value: option.value
+    }))
+  }, [exportForm])
 
   if (isLoading || !fieldMappingInstance || !exportForm) {
-    return (
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>HubSpot Field</TableHead>
-              <TableHead>Mapping</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <Skeleton className="h-6 w-[200px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-[200px]" />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    )
+    return <LoadingState />
   }
 
   return (
+    <DndProvider backend={HTML5Backend}>
+      <div className="grid grid-cols-[1fr,300px] gap-4">
+        <div className="rounded-md border">
+          <Table>
+            <TableHeaderComponent />
+            <TableBody>
+              {filteredFields.map((field) => (
+                <MappingRow
+                  key={field.locator}
+                  field={field}
+                  exportForm={exportForm}
+                  initialMapping={fieldMappingInstance.exportValue[field.locator]}
+                  onUpdate={(value) => handleFieldUpdate(field, value)}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <AvailableFieldsSidebar fields={availableFields} />
+      </div>
+    </DndProvider>
+  )
+})
+
+// Separate loading state component
+const LoadingState = memo(function LoadingState() {
+  return (
     <div className="rounded-md border">
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>HubSpot Field</TableHead>
-            <TableHead>Mapping</TableHead>
-          </TableRow>
-        </TableHeader>
+        <TableHeaderComponent />
         <TableBody>
-          {filteredFields.map((field) => (
-            <FieldRow
-              key={field.locator}
-              field={field}
-              exportForm={exportForm}
-              currentMapping={fieldMappingInstance.exportValue[field.locator]}
-              onSelectChange={handleSelectChange}
-              selectedValue={selectedValues[field.locator]}
-            />
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <Skeleton className="h-6 w-[200px]" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-6 w-[200px]" />
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
