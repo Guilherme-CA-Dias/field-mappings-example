@@ -1,10 +1,10 @@
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Users",
+  title: "Field Mappings",
 }
 
-export default function UsersLayout({
+export default function FieldMappingsLayout({
   children,
 }: {
   children: React.ReactNode
