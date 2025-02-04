@@ -63,8 +63,8 @@ const TableHeaderComponent = memo(function TableHeaderComponent() {
   return (
     <TableHeader>
       <TableRow>
-        <TableHead>HubSpot Field</TableHead>
-        <TableHead>Mapping</TableHead>
+        <TableHead className="text-base">HubSpot Field</TableHead>
+        <TableHead className="text-base">Mapping</TableHead>
       </TableRow>
     </TableHeader>
   )
@@ -108,7 +108,9 @@ const MappingRow = memo(function MappingRow({
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{field.name}</TableCell>
+      <TableCell className="text-base font-medium">
+        {field.name}
+      </TableCell>
       <TableCell>
         <DroppableTarget
           onDrop={handleDrop}
@@ -192,8 +194,8 @@ export const FieldMappingTable = memo(function FieldMappingTable({
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="grid grid-cols-[1fr,300px] gap-4">
-        <div className="rounded-md border">
+      <div className="grid grid-cols-[2fr,1fr] gap-6">
+        <div className="rounded-md border min-w-0">
           <Table>
             <TableHeaderComponent />
             <TableBody>
@@ -209,7 +211,19 @@ export const FieldMappingTable = memo(function FieldMappingTable({
             </TableBody>
           </Table>
         </div>
-        <AvailableFieldsSidebar fields={availableFields} />
+
+        <div className="space-y-2 max-w-xs">
+          <h4 className="font-medium text-sm px-1">Available Fields</h4>
+          <div className="space-y-1.5 p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+            {availableFields.map((field, index) => (
+              <DraggableField
+                key={index}
+                name={field.name}
+                value={field.value}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </DndProvider>
   )

@@ -20,10 +20,11 @@ export const DraggableField = memo(function DraggableField({ name, value }: Drag
   return (
     <div
       ref={drag}
-      className={`p-2 rounded-md border border-gray-200 dark:border-gray-700 
-        bg-white dark:bg-gray-800 cursor-move
+      className={`px-3 py-2 rounded-md text-sm cursor-move
+        bg-blue-50 dark:bg-blue-900/20 
+        hover:bg-blue-100 dark:hover:bg-blue-900/30
         ${isDragging ? 'opacity-50' : 'opacity-100'}
-        hover:bg-gray-50 dark:hover:bg-gray-700`}
+        transition-colors duration-200`}
     >
       {name}
     </div>
