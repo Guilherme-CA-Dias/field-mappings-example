@@ -6,11 +6,13 @@ import { memo } from 'react'
 interface DroppableTargetProps {
   onDrop: (item: any) => void
   currentValue?: string
+  isUpdating?: boolean
 }
 
 export const DroppableTarget = memo(function DroppableTarget({ 
   onDrop, 
-  currentValue 
+  currentValue,
+  isUpdating 
 }: DroppableTargetProps) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'FIELD',
@@ -26,18 +28,22 @@ export const DroppableTarget = memo(function DroppableTarget({
   return (
     <div
       ref={drop}
-      className={`h-12 p-2 rounded-md border-2 border-dashed flex items-center
-        ${isOver 
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-          : 'border-gray-300 dark:border-gray-600'}
-        ${currentValue 
-          ? 'bg-white dark:bg-gray-800' 
-          : 'bg-gray-50 dark:bg-gray-900'}
-      `}
+      className="min-h-[48px] rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 p-2.5"
     >
-      <span className="truncate">
-        {currentValue || 'Drop field here'}
-      </span>
+      <div
+        className={`inline-flex items-center h-10 px-3 py-2 rounded-md
+          ${isOver 
+            ? 'bg-blue-100 dark:bg-blue-900/30' 
+            : currentValue 
+              ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30' 
+              : 'bg-gray-50 dark:bg-gray-900 hover:bg-blue-50 dark:hover:bg-blue-900/20'}
+          transition-colors duration-200
+        `}
+      >
+        <span className="truncate text-sm">
+          {currentValue || 'Drop field here'}
+        </span>
+      </div>
     </div>
   )
 }) 
