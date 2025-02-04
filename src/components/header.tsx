@@ -43,10 +43,10 @@ export function Header() {
                 Integrations
               </Link>
               <Link
-                href="/field-mappings"
+                href="/communication"
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium"
               >
-                Field Mappings
+                Communication
               </Link>
             </div>
           </div>
