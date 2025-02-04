@@ -2,6 +2,7 @@
 
 import { useIntegrationApp } from "@integration-app/react"
 import { CommunicationForm } from "./components/communication-form"
+import { WhatsAppForm } from "./components/whatsapp-form"
 import { useEffect, useState } from "react"
 import { DataForm } from "@integration-app/sdk"
 
@@ -49,15 +50,30 @@ export default function CommunicationPage() {
 
   return (
     <div className="container py-10">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Communication</h1>
-          <p className="text-muted-foreground mt-2">
-            Send information to your connected CRM system
-          </p>
+      <h1 className="text-2xl font-bold tracking-tight mb-8">Communication</h1>
+      
+      <div className="grid grid-cols-2 divide-x divide-gray-200 dark:divide-gray-800 gap-8">
+        <div className="space-y-6 pr-8">
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Push to CRM</h2>
+            <p className="text-muted-foreground">
+              Send information to your connected CRM system
+            </p>
+          </div>
+
+          <CommunicationForm fields={fields} isLoading={isLoading} />
         </div>
 
-        <CommunicationForm fields={fields} isLoading={isLoading} />
+        <div className="space-y-6 pl-8">
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Send WhatsApp Message</h2>
+            <p className="text-muted-foreground">
+              Send a direct message via WhatsApp
+            </p>
+          </div>
+
+          <WhatsAppForm />
+        </div>
       </div>
     </div>
   )
