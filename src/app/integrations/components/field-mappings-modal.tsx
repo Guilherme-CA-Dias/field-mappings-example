@@ -13,12 +13,14 @@ interface FieldMappingsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   integrationKey: string
+  integrationName: string
 }
 
 export function FieldMappingsModal({
   open,
   onOpenChange,
   integrationKey,
+  integrationName
 }: FieldMappingsModalProps) {
   const integrationApp = useIntegrationApp()
   const { fieldMappingInstance, loading, error } = useFieldMappingInstance({
@@ -85,7 +87,8 @@ export function FieldMappingsModal({
     onFieldUpdate: handleFieldUpdate,
     isLoading: loading,
     selectedFields,
-  }), [fieldMappingInstance, handleFieldUpdate, loading, selectedFields])
+    integrationName
+  }), [fieldMappingInstance, handleFieldUpdate, loading, selectedFields, integrationName])
 
   const selectorProps = useMemo(() => ({
     schema: fieldMappingInstance?.externalSchema,

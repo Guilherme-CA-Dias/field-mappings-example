@@ -10,6 +10,7 @@ export function IntegrationList() {
   const integrationApp = useIntegrationApp()
   const { integrations, refresh } = useIntegrations()
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null)
+  const [selectedIntegrationName, setSelectedIntegrationName] = useState<string | null>(null)
   const [isFieldMappingsOpen, setIsFieldMappingsOpen] = useState(false)
 
   const handleConnect = async (integration: IntegrationAppIntegration) => {
@@ -62,6 +63,7 @@ export function IntegrationList() {
               <button
                 onClick={() => {
                   setSelectedIntegration(integration.key)
+                  setSelectedIntegrationName(integration.name)
                   setIsFieldMappingsOpen(true)
                 }}
                 className="px-4 py-2 rounded-md font-medium transition-colors bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200 flex items-center"
@@ -93,6 +95,7 @@ export function IntegrationList() {
           open={isFieldMappingsOpen}
           onOpenChange={setIsFieldMappingsOpen}
           integrationKey={selectedIntegration}
+          integrationName={selectedIntegrationName}
         />
       )}
     </ul>

@@ -16,6 +16,10 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DraggableField } from "./draggable-field"
 import { DroppableTarget } from "./droppable-target"
 
+/**
+ * Represents the structure of a field mapping instance
+ * from the Integration App SDK
+ */
 interface FieldMappingInstance {
   appSchema: DataSchema
   importValue: any
@@ -31,9 +35,10 @@ interface FieldOption {
 
 interface FieldMappingTableProps {
   fieldMappingInstance: FieldMappingInstance | null
-  onFieldUpdate: (appFieldValue: any, hubspotField: any) => void
+  onFieldUpdate: (appFieldValue: any, targetField: any) => void
   isLoading?: boolean
   selectedFields: string[]
+  integrationName: string
 }
 
 // Move this outside the component to prevent recreation
@@ -59,11 +64,15 @@ const formatMappingExpression = (value: any): string => {
 }
 
 // Create a separate memoized component for the table header
-const TableHeaderComponent = memo(function TableHeaderComponent() {
+const TableHeaderComponent = memo(function TableHeaderComponent({ 
+  integrationName 
+}: { 
+  integrationName: string 
+}) {
   return (
     <TableHeader>
       <TableRow>
-        <TableHead className="text-base">HubSpot Field</TableHead>
+        <TableHead className="text-base">{integrationName} Field</TableHead>
         <TableHead className="text-base">Mapping</TableHead>
       </TableRow>
     </TableHeader>
@@ -144,11 +153,20 @@ const AvailableFieldsSidebar = memo(function AvailableFieldsSidebar({
   )
 })
 
+/**
+ * Table component that displays available fields for mapping
+ * and their corresponding drop targets.
+ * 
+ * Fields are fetched from the Integration App SDK's field mapping
+ * instance, specifically from the appSchema.properties which contains
+ * the available fields like First Name, Last Name, Email, Phone.
+ */
 export const FieldMappingTable = memo(function FieldMappingTable({
   fieldMappingInstance,
   onFieldUpdate,
   isLoading = false,
   selectedFields,
+  integrationName,
 }: FieldMappingTableProps) {
   const exportForm = useMemo(() => {
     if (!fieldMappingInstance) return null
@@ -189,7 +207,7 @@ export const FieldMappingTable = memo(function FieldMappingTable({
   }, [exportForm])
 
   if (isLoading || !fieldMappingInstance || !exportForm) {
-    return <LoadingState />
+    return <LoadingState integrationName={integrationName} />
   }
 
   return (
@@ -197,7 +215,7 @@ export const FieldMappingTable = memo(function FieldMappingTable({
       <div className="grid grid-cols-[2fr,1fr] gap-6">
         <div className="rounded-md border min-w-0">
           <Table>
-            <TableHeaderComponent />
+            <TableHeaderComponent integrationName={integrationName} />
             <TableBody>
               {filteredFields.map((field) => (
                 <MappingRow
@@ -230,11 +248,15 @@ export const FieldMappingTable = memo(function FieldMappingTable({
 })
 
 // Separate loading state component
-const LoadingState = memo(function LoadingState() {
+const LoadingState = memo(function LoadingState({ 
+  integrationName 
+}: { 
+  integrationName: string 
+}) {
   return (
     <div className="rounded-md border">
       <Table>
-        <TableHeaderComponent />
+        <TableHeaderComponent integrationName={integrationName} />
         <TableBody>
           {Array.from({ length: 5 }).map((_, index) => (
             <TableRow key={index}>
