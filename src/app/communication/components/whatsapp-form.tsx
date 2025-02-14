@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useIntegrationApp } from "@integration-app/react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 type MessageType = "custom" | "template"
@@ -20,9 +20,13 @@ const selectStyles = cn(
   "text-gray-900 dark:text-gray-50"
 )
 
-export function WhatsAppForm() {
+interface WhatsAppFormProps {
+  initialPhone: string
+}
+
+export function WhatsAppForm({ initialPhone }: WhatsAppFormProps) {
   const [messageType, setMessageType] = useState<MessageType>("custom")
-  const [phoneNumber, setPhoneNumber] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState(initialPhone)
   const [message, setMessage] = useState("")
   const [templateName, setTemplateName] = useState("")
   const [languageCode, setLanguageCode] = useState("")
@@ -76,6 +80,10 @@ export function WhatsAppForm() {
       setIsSending(false)
     }
   }
+
+  useEffect(() => {
+    setPhoneNumber(initialPhone)
+  }, [initialPhone])
 
   return (
     <div className="space-y-6">
