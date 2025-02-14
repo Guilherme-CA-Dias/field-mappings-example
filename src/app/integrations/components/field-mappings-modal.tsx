@@ -5,7 +5,8 @@ import { FieldMappingTable } from "@/app/field-mappings/components/field-mapping
 import { FieldSelector } from "@/app/field-mappings/components/field-selector"
 import { useFieldMappingInstance, useIntegrationApp } from "@integration-app/react"
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
-import { X } from "lucide-react"
+import { Settings, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const STORAGE_KEY = 'field-mapping-selected-fields'
 
@@ -82,6 +83,17 @@ export function FieldMappingsModal({
     }
   }, [fieldMappingInstance, integrationApp, integrationKey])
 
+  const handleOpenConfiguration = async () => {
+    try {
+      await integrationApp
+        .connection(integrationKey)
+        .fieldMapping('contacts')
+        .openConfiguration()
+    } catch (error) {
+      console.error("Failed to open configuration:", error)
+    }
+  }
+
   const tableProps = useMemo(() => ({
     fieldMappingInstance: fieldMappingInstance || null,
     onFieldUpdate: handleFieldUpdate,
@@ -109,12 +121,22 @@ export function FieldMappingsModal({
             Configure how fields are mapped between systems
           </p>
         </div>
-        <button
-          onClick={() => onOpenChange(false)}
-          className="rounded-full p-2 hover:bg-accent"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={handleOpenConfiguration}
+            variant="outline"
+            className="px-4 py-2 rounded-md font-medium transition-colors bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200 flex items-center"
+          >
+            <Settings className="h-4 w-4" />
+            Configure Mapping using IntegrationApp modal
+          </Button>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="rounded-full p-2 hover:bg-accent"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-8">

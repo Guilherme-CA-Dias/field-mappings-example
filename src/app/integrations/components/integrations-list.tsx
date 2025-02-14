@@ -59,7 +59,7 @@ export function IntegrationList() {
             </h3>
           </div>
           <div className="flex items-center space-x-2">
-            {integration.connection && (
+            {integration.connection && integration.key !== 'whatsapp' && (
               <button
                 onClick={() => {
                   setSelectedIntegration(integration.key)
