@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { MessageCircle } from "lucide-react"
 import { usePhoneContext } from "./phone-context"
 import { Button } from "@/components/ui/button"
+import { ChatModal } from "./chat-modal"
 
 interface Contact {
   id: string
@@ -31,6 +32,7 @@ export function ContactsList() {
   const containerRef = useRef<HTMLDivElement>(null)
   const integrationApp = useIntegrationApp()
   const { setPhoneNumber } = usePhoneContext()
+  const [activeChat, setActiveChat] = useState<{ contact: string; phone: string } | null>(null)
 
   const fetchContacts = useCallback(async (nextCursor: string | null = null) => {
     try {
@@ -69,8 +71,9 @@ export function ContactsList() {
   }, [cursor, hasMore, isLoadingMore, fetchContacts])
 
   const handleWhatsAppClick = (phone: string) => {
+    const contact = phone.replace(/\D/g, '')
     setPhoneNumber(phone)
-    document.getElementById('whatsapp-form')?.scrollIntoView({ behavior: 'smooth' })
+    setActiveChat({ contact, phone })
   }
 
   if (isLoading) {
@@ -140,6 +143,14 @@ export function ContactsList() {
           )}
         </div>
       </div>
+
+      {activeChat && (
+        <ChatModal
+          contact={activeChat.contact}
+          phoneNumber={activeChat.phone}
+          onClose={() => setActiveChat(null)}
+        />
+      )}
     </div>
   )
 } 

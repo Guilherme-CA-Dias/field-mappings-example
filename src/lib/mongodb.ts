@@ -1,49 +1,56 @@
-import mongoose from 'mongoose';
+import { MongoClient } from "mongodb"
 
-interface MongooseCache {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
+if (!process.env.MONGODB_URI) {
+  throw new Error('Please add your Mongo URI to .env.local')
 }
 
-declare global {
-  // eslint-disable-next-line no-var
-  var mongoose: MongooseCache | undefined;
+if (!process.env.MONGODB_DB) {
+  throw new Error('Please add your MONGODB_DB to .env.local')
 }
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI environment variable is not defined. Please set it in your .env file.');
+const uri = process.env.MONGODB_URI
+const options = {
+  connectTimeoutMS: 10000, // 10 seconds
+  socketTimeoutMS: 45000,  // 45 seconds
 }
 
-const cached: MongooseCache = global.mongoose || { conn: null, promise: null };
+let client: MongoClient
+let clientPromise: Promise<MongoClient>
 
-if (!global.mongoose) {
-  global.mongoose = cached;
-}
-
-async function connectDB(): Promise<typeof mongoose> {
-  if (cached.conn) {
-    return cached.conn;
+if (process.env.NODE_ENV === "development") {
+  // In development mode, use a global variable so that the value
+  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  let globalWithMongo = global as typeof globalThis & {
+    _mongoClientPromise?: Promise<MongoClient>
   }
 
-  if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    // We know MONGODB_URI is defined here because we checked above
-    cached.promise = mongoose.connect(MONGODB_URI as string, opts);
+  if (!globalWithMongo._mongoClientPromise) {
+    client = new MongoClient(uri, options)
+    globalWithMongo._mongoClientPromise = client.connect()
+      .catch(err => {
+        console.error("Failed to connect to MongoDB:", err)
+        throw err
+      })
   }
+  clientPromise = globalWithMongo._mongoClientPromise
+} else {
+  // In production mode, it's best to not use a global variable.
+  client = new MongoClient(uri, options)
+  clientPromise = client.connect()
+}
 
+export async function connectToDatabase() {
   try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
+    const client = await clientPromise
+    const db = client.db(process.env.MONGODB_DB)
+    
+    // Test the connection
+    await db.command({ ping: 1 })
+    console.log("MongoDB connection established")
+    
+    return { client, db }
+  } catch (error) {
+    console.error("Failed to connect to database:", error)
+    throw error
   }
-
-  return cached.conn;
-}
-
-export default connectDB; 
+} 

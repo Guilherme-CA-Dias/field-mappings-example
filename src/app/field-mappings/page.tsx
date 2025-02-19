@@ -134,7 +134,7 @@ export default function FieldMappingPage() {
             <FieldSelector {...selectorProps} />
           </div>
         )}
-        <div className="">
+        <div className="mt-6">
           <FieldMappingTable {...tableProps} />
         </div>
       </div>
