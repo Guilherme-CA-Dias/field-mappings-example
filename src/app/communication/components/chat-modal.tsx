@@ -123,28 +123,25 @@ export function ChatModal({ contact, phoneNumber, onClose }: ChatModalProps) {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-[450px] h-[600px] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col border border-gray-200 dark:border-gray-700">
+    <div className="chat-modal">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-lg">
+      <div className="chat-modal-header">
         <div>
           <h3 className="font-medium">{phoneNumber}</h3>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-        >
+        <button onClick={onClose} className="chat-modal-close">
           <X className="h-5 w-5" />
         </button>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900/50">
+      <div className="chat-messages-container">
         {isLoading ? (
           <div className="text-center text-gray-500">Loading messages...</div>
         ) : (
           <>
             {showTemplateAlert && (
-              <div className="mb-4 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+              <div className="template-alert">
                 <div className="flex items-start">
                   <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                   <div className="ml-3">
@@ -159,8 +156,7 @@ export function ChatModal({ contact, phoneNumber, onClose }: ChatModalProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="mt-2 text-xs bg-white hover:bg-gray-50 text-gray-700 border-gray-200 
-                        dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-600"
+                      className="template-alert-button"
                       onClick={() => {
                         onClose()
                         document.getElementById('whatsapp-form')?.scrollIntoView({ behavior: 'smooth' })
@@ -181,19 +177,15 @@ export function ChatModal({ contact, phoneNumber, onClose }: ChatModalProps) {
                   key={message._id || message.messageId}
                   className={`flex ${message.direction === 'outgoing' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                      message.direction === 'outgoing'
-                        ? 'bg-blue-500 text-white rounded-br-none'
-                        : 'bg-white dark:bg-gray-800 rounded-bl-none shadow-sm'
-                    }`}
-                  >
+                  <div className={`message-bubble ${
+                    message.direction === 'outgoing' ? 'message-outgoing' : 'message-incoming'
+                  }`}>
                     <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
-                    <span className={`text-[10px] ${
-                      message.direction === 'outgoing'
-                        ? 'text-blue-100'
-                        : 'text-gray-500 dark:text-gray-400'
-                    } block mt-1`}>
+                    <span className={`message-timestamp ${
+                      message.direction === 'outgoing' 
+                        ? 'message-timestamp-outgoing' 
+                        : 'message-timestamp-incoming'
+                    }`}>
                       {new Date(message.timestamp).toLocaleTimeString([], { 
                         hour: '2-digit', 
                         minute: '2-digit' 
@@ -209,7 +201,7 @@ export function ChatModal({ contact, phoneNumber, onClose }: ChatModalProps) {
       </div>
 
       {/* Message Input */}
-      <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-lg">
+      <form onSubmit={handleSendMessage} className="chat-input-container">
         <div className="flex gap-2">
           <Textarea
             value={newMessage}
@@ -217,7 +209,7 @@ export function ChatModal({ contact, phoneNumber, onClose }: ChatModalProps) {
             placeholder={showTemplateAlert 
               ? "Please send a template message first" 
               : "Type a message..."}
-            className="min-h-[50px] max-h-[120px] resize-none text-sm py-2 bg-gray-50 dark:bg-gray-900"
+            className="chat-textarea"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -231,7 +223,7 @@ export function ChatModal({ contact, phoneNumber, onClose }: ChatModalProps) {
           <Button 
             type="submit"
             disabled={isSending || !newMessage.trim() || showTemplateAlert}
-            className="self-end h-10 w-10 p-0 rounded-full"
+            className="send-button"
             variant="default"
           >
             {isSending ? (
