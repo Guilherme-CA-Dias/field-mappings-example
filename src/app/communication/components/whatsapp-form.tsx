@@ -20,6 +20,15 @@ const selectStyles = cn(
   "text-gray-900 dark:text-gray-50"
 )
 
+interface WhatsAppMessage {
+  from: string
+  text: string
+  timestamp: Date
+  messageId: string
+  contact: string
+  direction: 'incoming' | 'outgoing'
+}
+
 interface WhatsAppFormProps {
   initialPhone: string
 }
@@ -32,6 +41,32 @@ export function WhatsAppForm({ initialPhone }: WhatsAppFormProps) {
   const [languageCode, setLanguageCode] = useState("")
   const [isSending, setIsSending] = useState(false)
   const integrationApp = useIntegrationApp()
+
+  const saveMessage = async (text: string, to: string) => {
+    try {
+      // Normalize the phone number
+      const contact = to.replace(/\D/g, '')
+      
+      const message: WhatsAppMessage = {
+        from: 'system', // or could be your business number
+        text,
+        timestamp: new Date(),
+        messageId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        contact,
+        direction: 'outgoing'
+      }
+
+      await fetch('/api/messages/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(message)
+      })
+    } catch (error) {
+      console.error("Failed to save outgoing message:", error)
+    }
+  }
 
   const handleCustomMessageSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +81,9 @@ export function WhatsAppForm({ initialPhone }: WhatsAppFormProps) {
           "to": phoneNumber,
           "text": message
         })
+
+      // Save the outgoing message
+      await saveMessage(message, phoneNumber)
 
       setPhoneNumber("")
       setMessage("")
@@ -70,6 +108,9 @@ export function WhatsAppForm({ initialPhone }: WhatsAppFormProps) {
           "templateName": templateName,
           "languageCode": languageCode
         })
+
+      // Save the outgoing template message
+      await saveMessage(`Template: ${templateName}`, phoneNumber)
 
       setPhoneNumber("")
       setTemplateName("")
